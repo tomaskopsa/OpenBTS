@@ -702,7 +702,7 @@ typedef std::map<unsigned,TMSIRecord> TMSIMap;
 		*/
 		
 		const char* IMSI() const { return mIMSI.c_str(); }
-		const char* Ki() const { return mKi.c_str(); }
+		const unsigned char* Ki() const { return (unsigned char*) mKi.c_str(); }
                
 		void touch() const { mTouched.now(); }
 		
@@ -718,7 +718,7 @@ typedef std::map<unsigned,TMSIRecord> TMSIMap;
 		 Load a Ki record from a file.
 		 @return Ki or 0 on read failure.
 		 */
-		unsigned load(FILE*);
+		bool load(FILE*);
 		
 	};
 	typedef std::map<unsigned,KiRecord> KiMap;

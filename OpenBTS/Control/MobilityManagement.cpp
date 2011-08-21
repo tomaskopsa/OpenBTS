@@ -185,7 +185,6 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, S
 			openRegistration
 		) ) {
 			newTMSI = gTMSITable.assign(mobID.digits());
-			
 	}
 
 
@@ -253,16 +252,17 @@ LOG(INFO) << *resp<< "Response Recieved";
 const char* imsi;
 imsi=mobID.digits();
 if (gConfig.defines("Control.KiTable.SavePath")) {
-	LOG(INFO) << "imsiData = " << imsi;
+	LOG(INFO) << "IMSI=" << imsi;
 	gKiTable.loadAndFindKI(imsi);
-	LOG(INFO) << "Ki = " << gKiTable.getKi();
+	//LOG(INFO) << "Ki = " << gKiTable.getKi(); // pointless getKi() returns pointer
 
 	A3A8Class a3a8;
 	
 	GSM::L3AuthenticationParameterRAND mRand;
 
 	for (int i=0;i<16;i++)
-		LOG(INFO) << "RANDTesting = " << int(mRand.getRandToA3A8()[i]);
+		LOG(DEBUG) << "RANDTesting=" << int(mRand.getRandToA3A8()[i]);
+
 	a3a8.A3A8(mRand.getRandToA3A8(),gKiTable.getKi());
     
 	uint64_t Kc;
@@ -271,7 +271,9 @@ if (gConfig.defines("Control.KiTable.SavePath")) {
 	
 	unsigned int SRES;
 	SRES=a3a8.getSRES();
-	
+
+	LOG(INFO) << "SRES=" << SRES << " " << hex << SRES ;
+
 }
 if(1/**resp == SRES*/) // Comparison between SRES and Resp
 {
@@ -366,6 +368,3 @@ else{ // If the IMSI has been used, TMSI Case has been neglected as it is never 
 
 
 // vim: ts=4 sw=4
-
-
-

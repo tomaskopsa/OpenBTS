@@ -398,18 +398,26 @@ unsigned TMSIRecord::load(FILE* fp)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-unsigned KiRecord::load(FILE* fp) {
+bool KiRecord::load(FILE* fp) {
   
-    unsigned KI=0;
-    char IMSI[16],IMSI2[16];
-    char Ki[32];
-    //fscanf(fp, "%10u %15s %15s %32s \n",&KI, IMSI,IMSI2, Ki);
-	fscanf(fp, "%10u %16s %32s %15s\n",&KI,IMSI, Ki, IMSI2);
-    LOG(DEBUG) << "IMSIRead" << IMSI2;
-	LOG(DEBUG) << "KiRead" << Ki;
-    mIMSI = IMSI2;
+	/*
+	 * fix - Ki cannot be returned as unsigned, can be stored in Byte array only
+	 * next fix: load should return bool value indicating correct line format
+	 *
+	 * current file format is following;
+	 * <IMSI> <Ki>
+	 * possible file verification: check count of chars, digits
+	 *
+	 * in the end, database would be handsome
+	 */
+
+    char IMSI[16];
+    char Ki[33];
+	fscanf(fp, "%15s %32s\n",IMSI, Ki);
+	LOG(DEBUG) << "Reading IMSI=" << IMSI << " Ki=" << Ki;
+    mIMSI = IMSI;
     mKi = Ki;
-    return KI;
+    return true;
     
 }
 
@@ -605,33 +613,37 @@ int KiTable::hextoint(char x) {
 void KiTable::loadAndFindKI(const char* IMSI) {
     const char* filename = gConfig.getStr("Control.KiTable.SavePath");
     FILE* fp = fopen(filename, "r");
-    const char *KiSigned;
+    const unsigned char *KiSigned;
+    bool IMSIfound = 0;
 
-    LOG(INFO) << "loading Ki table from " << filename;
+    LOG(INFO) << "Loading data from " << filename << ", searching IMSI=" << IMSI;
     mLock.lock();
     while (!feof(fp)) {
 
-        KiRecord val;
-        unsigned key = val.load(fp);
-		LOG(INFO) << "Will ASK" ;
-		LOG(INFO) << "Will ASK" << val.IMSI();
-		LOG(INFO) << "Will ASK KI" << val.Ki();
-		LOG(INFO) << "Will ASK" << IMSI;
-        if (!strcmp(val.IMSI(), IMSI)) {
-            KiSigned = val.Ki();
-			LOG(INFO) << "KiRead = " << KiSigned;
+        KiRecord val; // todo: initiate instance out of cycle and handle destructor
+        val.load(fp);
+
+		if (!strcmp(val.IMSI(), IMSI)) {
+			LOG(INFO) << "IMSI:" << IMSI << " found in table, authorization process can continue";
+			IMSIfound = 1;
+			KiSigned = val.Ki();
+			LOG(INFO) << "Ki=" << KiSigned;
             for (int i = 0; i < 16; i++){
                 Ki[i] = (hextoint(KiSigned[2 * i]) << 4) | hextoint(KiSigned[2 * i + 1]);
-				LOG(DEBUG) << "Converting Ki to unsigned ... " << Ki[i];
+                /* cast to unsigned is necessary, else is displayed corrupted value  */
+				LOG(DEBUG) << "Converting Ki to unsigned: " << (unsigned) Ki[i]; //
 			}
             break;
         }
-		
-        if (!key) break;
+        // if (!key) break; //no use, load returns currently 0
     }
+    if (!IMSIfound)
+    	LOG(INFO) << "IMSI="<< IMSI << " not found, skip authorization process";
+
 	mLock.unlock();
     fclose(fp);
-	LOG(INFO) << "KiNew = " << Ki;
+    /* printing value of pointer is useless */
+	//LOG(INFO) << "KiNew = " << Ki; //
 }
                 
 void KiTable::setFrameNumber(uint32_t FN){
