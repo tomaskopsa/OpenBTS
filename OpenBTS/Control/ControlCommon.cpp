@@ -423,7 +423,7 @@ bool KiRecord::load(FILE* fp) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned TMSITable::assign(const char* IMSI)
+unsigned TMSITable::assign(const char* IMSI, const char* IMEI)
 {
 	purge();
 	mLock.lock();
@@ -434,13 +434,24 @@ unsigned TMSITable::assign(const char* IMSI)
 		return oldTMSI;
 	}
 	unsigned TMSI = mCounter++;
-	mMap[TMSI] = TMSIRecord(IMSI);
+	mMap[TMSI] = TMSIRecord(IMSI, IMEI);
 	mLock.unlock();
 	if (gConfig.defines("Control.TMSITable.SavePath")) save(gConfig.getStr("Control.TMSITable.SavePath"));
 	return TMSI;
 }
 
-
+bool TMSITable::setIMEI(unsigned TMSI, const std::string& IMEI) {
+	mLock.lock();
+	TMSIMap::iterator iter = mMap.find(TMSI);
+	if (iter == mMap.end()) {
+		mLock.unlock();
+		return false;
+	}
+	iter->second.IMEI(IMEI);
+	iter->second.touch();
+	mLock.unlock();
+	return true;
+}
 bool TMSITable::find(unsigned TMSI, TMSIRecord& target)
 {
 	mLock.lock();

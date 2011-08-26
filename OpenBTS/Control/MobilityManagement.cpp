@@ -192,13 +192,14 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, S
 	// Note: IMEI is requested only on IMSI attach, i.e. only when user
 	// registers for the first time or after a long inactivity. I.e. this
 	// will not work if user changes mobiles frequently.
-	if (IMSIAttach && gConfig.defines("Control.LUR.QueryIMEI")) {
+//	if (IMSIAttach && gConfig.defines("Control.LUR.QueryIMEI")) {
+	if (gConfig.defines("Control.LUR.QueryIMEI")) {    // IMSIAttach rejected to get IMEI everytime
 		SDCCH->send(L3IdentityRequest(IMEIType));
 		L3Message* msg = getMessage(SDCCH);
 		L3IdentityResponse *resp = dynamic_cast<L3IdentityResponse*>(msg);
 		if (resp) {
-			unsigned tmsi = newTMSI?newTMSI:preexistingTMSI;
-//			gTMSITable.setIMEI(tmsi, resp->mobileID().digits()); // Doesn't compile! setIMEI is not defined for gTMSITable!
+			unsigned tmsi = newTMSI ? newTMSI:preexistingTMSI;
+			gTMSITable.setIMEI(tmsi, resp->mobileID().digits()); // setIMEI is defined in 'Save IMEI in TMSI table' patch
 		} else {
 			if (msg) {
 				LOG(WARN) << "Unexpected message " << *msg;
