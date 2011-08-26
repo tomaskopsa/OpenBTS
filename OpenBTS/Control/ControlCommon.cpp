@@ -621,7 +621,7 @@ int KiTable::hextoint(char x) {
     exit(1);
 }
 
-void KiTable::loadAndFindKI(const char* IMSI) {
+bool KiTable::loadAndFindKI(const char* IMSI) {
     const char* filename = gConfig.getStr("Control.KiTable.SavePath");
     FILE* fp = fopen(filename, "r");
     const unsigned char *KiSigned;
@@ -648,13 +648,14 @@ void KiTable::loadAndFindKI(const char* IMSI) {
         }
         // if (!key) break; //no use, load returns currently 0
     }
-    if (!IMSIfound)
-    	LOG(INFO) << "IMSI="<< IMSI << " not found, skip authorization process";
-
 	mLock.unlock();
     fclose(fp);
-    /* printing value of pointer is useless */
-	//LOG(INFO) << "KiNew = " << Ki; //
+
+    if (!IMSIfound) {
+    	LOG(INFO) << "IMSI="<< IMSI << " not found, skip authorization process";
+    	return 0;
+    } else
+    	return 1;
 }
                 
 void KiTable::setFrameNumber(uint32_t FN){

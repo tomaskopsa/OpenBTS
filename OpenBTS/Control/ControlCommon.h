@@ -833,7 +833,7 @@ class TMSITable {
                   
 		}
 		unsigned char* getKi(){return Ki;};
-		void loadAndFindKI(const char* IMSI);
+		bool loadAndFindKI(const char* IMSI);
                 int hextoint(char x);
 		unsigned char* getRand(const char *rand);
 		void setFrameNumber(uint32_t FN);

@@ -273,7 +273,7 @@ if (gConfig.defines("Control.KiTable.SavePath")) {
 	unsigned int SRES;
 	SRES=a3a8.getSRES();
 
-	LOG(INFO) << "SRES=" << SRES << " " << hex << SRES ;
+	LOG(INFO) << "SRES=0x" << hex << SRES << " Kc=0x" << hex << Kc;
 
 }
 if(1/**resp == SRES*/) // Comparison between SRES and Resp
